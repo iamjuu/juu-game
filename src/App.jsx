@@ -1,15 +1,12 @@
-import Game from './game';
+import { Outlet, Link } from 'react-router-dom';
 import './App.css';
 
 function App() {
   return (
-    <div className="w-full h-screen">
-      <h1  className="text-4xl font-bold">game</h1>
-      <div className="w-full h-screen">
-
-      <Game />
+   
+      <div className="p-4">
+        <Outlet />
       </div>
-    </div>
   );
 }
 

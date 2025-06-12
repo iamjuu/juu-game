@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { CarImage, Juucoin, Fuel } from '../assets';
+import React, { useRef, useEffect, useState, useCallback } from "react";
+import { CarImage, Juucoin, Fuel } from "../../assets";
 
 const PETROL_CAN_WIDTH = 30;
 const PETROL_CAN_HEIGHT = 40;
@@ -28,7 +28,7 @@ const HillClimbGame = () => {
       angle: 0,
       angularVel: 0,
       onGround: false,
-      fuel: 100
+      fuel: 100,
     },
     camera: { x: 0, y: 0 },
     terrain: [],
@@ -37,17 +37,21 @@ const HillClimbGame = () => {
     keys: {},
     gameRunning: true,
     distance: 0,
-    coins: 0
+    coins: 0,
   });
 
-  const [gameStats, setGameStats] = useState({ distance: 0, fuel: 100, coins: 0 });
+  const [gameStats, setGameStats] = useState({
+    distance: 0,
+    fuel: 100,
+    coins: 0,
+  });
   const [gameOver, setGameOver] = useState(false);
 
   // Generate terrain with flat roads initially, then gradual mountains after 500m
   const generateTerrain = useCallback(() => {
     const terrain = [];
     let y = 350; // Start at a comfortable height
-    
+
     for (let x = 0; x < 5000; x += 20) {
       if (x < 500) {
         // First 500m: Keep mostly flat with very small variations
@@ -57,19 +61,19 @@ const HillClimbGame = () => {
         // After 500m: Gradually introduce mountains
         const distanceAfter500 = x - 500;
         const mountainLevel = Math.floor(distanceAfter500 / 800); // New mountain level every 800m
-        
+
         // Gradually increase variation, but keep it reasonable
-        const baseVariation = 15 + (mountainLevel * 10); // Start small, increase gradually
-        
+        const baseVariation = 15 + mountainLevel * 10; // Start small, increase gradually
+
         // Height bounds that create gentle mountains
-        const minHeight = Math.max(250, 350 - (mountainLevel * 30));
-        const maxHeight = Math.min(500, 350 + (mountainLevel * 30));
-        
+        const minHeight = Math.max(250, 350 - mountainLevel * 30);
+        const maxHeight = Math.min(500, 350 + mountainLevel * 30);
+
         // Apply gentle terrain variation
         y += (Math.random() - 0.5) * baseVariation;
         y = Math.max(minHeight, Math.min(maxHeight, y));
       }
-      
+
       terrain.push({ x, y });
     }
     return terrain;
@@ -80,9 +84,16 @@ const HillClimbGame = () => {
     const cans = [];
     if (!terrainPoints || terrainPoints.length === 0) return cans;
 
-    const lastTerrainX = terrainPoints.length > 0 ? terrainPoints[terrainPoints.length - 1].x : PETROL_CAN_START_X;
+    const lastTerrainX =
+      terrainPoints.length > 0
+        ? terrainPoints[terrainPoints.length - 1].x
+        : PETROL_CAN_START_X;
 
-    for (let currentX = PETROL_CAN_START_X; currentX < lastTerrainX; currentX += PETROL_CAN_SPACING) {
+    for (
+      let currentX = PETROL_CAN_START_X;
+      currentX < lastTerrainX;
+      currentX += PETROL_CAN_SPACING
+    ) {
       const terrainY = getTerrainHeight(currentX);
       if (terrainY === undefined || terrainY === null) continue;
       cans.push({
@@ -101,8 +112,11 @@ const HillClimbGame = () => {
     const coinsArr = [];
     if (!terrainPoints || terrainPoints.length === 0) return coinsArr;
 
-    const lastTerrainX = terrainPoints.length > 0 ? terrainPoints[terrainPoints.length - 1].x : COIN_START_X;
-    
+    const lastTerrainX =
+      terrainPoints.length > 0
+        ? terrainPoints[terrainPoints.length - 1].x
+        : COIN_START_X;
+
     // Define coin sets: [number of coins, gap after set]
     const coinSets = [
       { count: 10, gap: 500 }, // First set: 10 coins, then 500m gap
@@ -110,13 +124,13 @@ const HillClimbGame = () => {
       { count: 15, gap: 500 }, // Third set: 15 coins, then 500m gap
       { count: 20, gap: 500 }, // Fourth set: 20 coins, then 500m gap
     ];
-    
+
     let currentX = COIN_START_X;
     let setIndex = 0;
-    
+
     while (currentX < lastTerrainX && setIndex < coinSets.length) {
       const currentSet = coinSets[setIndex];
-      
+
       // Place coins for current set
       for (let i = 0; i < currentSet.count && currentX < lastTerrainX; i++) {
         const terrainY = getTerrainHeight(currentX);
@@ -128,22 +142,22 @@ const HillClimbGame = () => {
             active: true,
             collecting: false,
             animationTime: 0,
-            startY: 0
+            startY: 0,
           });
         }
         currentX += COIN_SPACING;
       }
-      
+
       // Add gap after the set
       currentX += currentSet.gap;
       setIndex++;
-      
+
       // If we've used all defined sets, repeat the last pattern
       if (setIndex >= coinSets.length) {
         setIndex = coinSets.length - 1; // Keep using the last set pattern
       }
     }
-    
+
     return coinsArr;
   }, []);
 
@@ -153,7 +167,7 @@ const HillClimbGame = () => {
     gameStateRef.current.terrain = newTerrain;
     gameStateRef.current.petrolCans = generatePetrolCans(newTerrain);
     gameStateRef.current.gameCoins = generateGameCoins(newTerrain);
-    
+
     // Preload car image
     const img = new Image();
     img.src = CarImage;
@@ -179,19 +193,19 @@ const HillClimbGame = () => {
   // Get terrain height at x position
   const getTerrainHeight = useCallback((x) => {
     const terrain = gameStateRef.current.terrain;
-    
+
     // Safety check for uninitialized or empty terrain
     if (!terrain || terrain.length === 0) {
       return 300; // Return a default height
     }
 
     if (x < 0) return terrain[0].y; // Use first point's y for negative x, assuming terrain starts at or after x=0
-    
-    const index = Math.floor(x / 20); 
-    
+
+    const index = Math.floor(x / 20);
+
     if (index < 0) return terrain[0].y; // Should be covered by x < 0 check or if x is small positive
     if (index >= terrain.length - 1) return terrain[terrain.length - 1].y; // Use last point if index is at or beyond the last segment
-    
+
     const t1 = terrain[index];
     const t2 = terrain[index + 1];
     const ratio = (x - t1.x) / (t2.x - t1.x);
@@ -208,12 +222,12 @@ const HillClimbGame = () => {
       gameStateRef.current.keys[e.key] = false;
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
     };
   }, []);
 
@@ -223,14 +237,14 @@ const HillClimbGame = () => {
     if (!state.gameRunning) return;
 
     const { car, keys, petrolCans, gameCoins } = state;
-    const dt = 1/60;
+    const dt = 1 / 60;
 
     // Input handling
-    if (keys['ArrowRight'] || keys['d']) {
+    if (keys["ArrowRight"] || keys["d"]) {
       car.vx += 200 * dt;
       car.fuel = Math.max(0, car.fuel - 10 * dt);
     }
-    if (keys['ArrowLeft'] || keys['a']) {
+    if (keys["ArrowLeft"] || keys["a"]) {
       car.vx -= 100 * dt;
       car.fuel = Math.max(0, car.fuel - 5 * dt);
     }
@@ -238,7 +252,7 @@ const HillClimbGame = () => {
     // Physics
     car.vy += 500 * dt; // gravity
     car.vx *= 0.995; // friction - reduced for smoother deceleration
-    
+
     // Update position
     car.x += car.vx * dt;
     car.y += car.vy * dt;
@@ -247,14 +261,14 @@ const HillClimbGame = () => {
 
     // Terrain collision
     const groundHeight = getTerrainHeight(car.x);
-    if (car.y + car.height/2 > groundHeight) {
-      car.y = groundHeight - car.height/2 + 5; // Added +5 to eliminate gap between car and ground
+    if (car.y + car.height / 2 > groundHeight) {
+      car.y = groundHeight - car.height / 2 + 5; // Added +5 to eliminate gap between car and ground
       car.vy = Math.max(0, car.vy * -0.3);
       car.onGround = true;
-      
+
       // Calculate ground angle for car rotation
       const groundAngle = Math.atan2(
-        getTerrainHeight(car.x + 10) - getTerrainHeight(car.x - 10), 
+        getTerrainHeight(car.x + 10) - getTerrainHeight(car.x - 10),
         20
       );
       car.angle = groundAngle * 0.1;
@@ -276,7 +290,12 @@ const HillClimbGame = () => {
         const canTop = can.y - can.height / 2;
         const canBottom = can.y + can.height / 2;
 
-        if (carRight > canLeft && carLeft < canRight && carBottom > canTop && carTop < canBottom) {
+        if (
+          carRight > canLeft &&
+          carLeft < canRight &&
+          carBottom > canTop &&
+          carTop < canBottom
+        ) {
           car.fuel = 100; // Reset fuel
           can.active = false; // Deactivate can
           // Optional: Add sound effect or score
@@ -295,7 +314,12 @@ const HillClimbGame = () => {
         const coinTop = coin.y - coin.radius;
         const coinBottom = coin.y + coin.radius;
 
-        if (carRight > coinLeft && carLeft < coinRight && carBottom > coinTop && carTop < coinBottom) {
+        if (
+          carRight > coinLeft &&
+          carLeft < coinRight &&
+          carBottom > coinTop &&
+          carTop < coinBottom
+        ) {
           state.coins += 1; // Increment coin count
           // Start collection animation
           coin.collecting = true;
@@ -313,14 +337,14 @@ const HillClimbGame = () => {
       if (coin.collecting) {
         coin.animationTime += dt;
         const animationDuration = 1.0; // 1 second animation
-        
+
         if (coin.animationTime >= animationDuration) {
           coin.active = false; // Deactivate coin after animation
           coin.collecting = false;
         } else {
           // Move coin upward during animation
           const progress = coin.animationTime / animationDuration;
-          coin.y = coin.startY - (100 * progress); // Move up 100 pixels
+          coin.y = coin.startY - 100 * progress; // Move up 100 pixels
         }
       }
     }
@@ -333,7 +357,7 @@ const HillClimbGame = () => {
 
     // Update stats
     state.distance = Math.max(state.distance, Math.floor(car.x / 10));
-    
+
     // Game over conditions
     if (car.fuel <= 0 || car.y > 600) {
       state.gameRunning = false;
@@ -343,7 +367,7 @@ const HillClimbGame = () => {
     setGameStats({
       distance: state.distance,
       fuel: Math.round(car.fuel),
-      coins: state.coins
+      coins: state.coins,
     });
   }, []);
 
@@ -352,16 +376,17 @@ const HillClimbGame = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
-    const { car, camera, terrain, petrolCans, gameCoins } = gameStateRef.current;
+    const ctx = canvas.getContext("2d");
+    const { car, camera, terrain, petrolCans, gameCoins } =
+      gameStateRef.current;
 
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Sky gradient
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    gradient.addColorStop(0, '#87CEEB');
-    gradient.addColorStop(1, '#E0F6FF');
+    gradient.addColorStop(0, "#87CEEB");
+    gradient.addColorStop(1, "#E0F6FF");
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -371,27 +396,27 @@ const HillClimbGame = () => {
     // Draw terrain
     ctx.beginPath();
     ctx.moveTo(terrain[0].x, terrain[0].y);
-    terrain.forEach(point => {
+    terrain.forEach((point) => {
       ctx.lineTo(point.x, point.y);
     });
-    ctx.lineTo(terrain[terrain.length - 1].x, 600);
-    ctx.lineTo(terrain[0].x, 600);
+    ctx.lineTo(terrain[terrain.length - 1].x, camera.y + canvas.height + 1);
+    ctx.lineTo(terrain[0].x, camera.y + canvas.height + 1);
     ctx.closePath();
-    ctx.fillStyle = '#8B4513';
+    ctx.fillStyle = "#8B4513";
     ctx.fill();
 
     // Draw grass line
     ctx.beginPath();
     ctx.moveTo(terrain[0].x, terrain[0].y);
-    terrain.forEach(point => {
+    terrain.forEach((point) => {
       ctx.lineTo(point.x, point.y);
     });
-    ctx.strokeStyle = '#228B22';
+    ctx.strokeStyle = "#228B22";
     ctx.lineWidth = 3;
     ctx.stroke();
 
     // Draw petrol cans
-    petrolCans.forEach(can => {
+    petrolCans.forEach((can) => {
       if (can.active) {
         if (fuelImageRef.current) {
           // Draw fuel image
@@ -404,7 +429,7 @@ const HillClimbGame = () => {
           );
         } else {
           // Fallback to red rectangle if image isn't loaded yet
-          ctx.fillStyle = 'red';
+          ctx.fillStyle = "red";
           ctx.fillRect(
             can.x - can.width / 2,
             can.y - can.height / 2,
@@ -416,7 +441,7 @@ const HillClimbGame = () => {
     });
 
     // Draw coins
-    gameCoins.forEach(coin => {
+    gameCoins.forEach((coin) => {
       if (coin.active) {
         // Calculate opacity for fade effect during collection animation
         let opacity = 1.0;
@@ -425,27 +450,27 @@ const HillClimbGame = () => {
           const progress = coin.animationTime / animationDuration;
           opacity = 1.0 - progress; // Fade from 1 to 0
         }
-        
+
         ctx.save();
         ctx.globalAlpha = opacity;
-        
+
         if (juucoinImageRef.current) {
           ctx.drawImage(
             juucoinImageRef.current,
             coin.x - 100, // Adjust x to center the 200px width
             coin.y - 100, // Adjust y to center the 200px height
-            200,          // Fixed width of 200px
-            200           // Fixed height of 200px
+            200, // Fixed width of 200px
+            200 // Fixed height of 200px
           );
         } else {
           // Fallback to drawing a circle if image isn't loaded yet
           ctx.beginPath();
           ctx.arc(coin.x, coin.y, coin.radius, 0, Math.PI * 2);
-          ctx.fillStyle = 'gold'; // Coin color
+          ctx.fillStyle = "gold"; // Coin color
           ctx.fill();
           ctx.closePath();
         }
-        
+
         ctx.restore();
       }
     });
@@ -454,17 +479,23 @@ const HillClimbGame = () => {
     ctx.save();
     ctx.translate(car.x, car.y);
     ctx.rotate(car.angle);
-    
+
     // Flip image if moving left (assuming default image faces right)
     if (car.vx < 0) {
       ctx.scale(-1, 1);
     }
-    
+
     // Draw car image if loaded
     if (carImageRef.current) {
-      ctx.drawImage(carImageRef.current, -car.width/2, -car.height/2, car.width, car.height);
+      ctx.drawImage(
+        carImageRef.current,
+        -car.width / 2,
+        -car.height / 2,
+        car.width,
+        car.height
+      );
     }
-    
+
     ctx.restore();
     ctx.restore();
   }, []);
@@ -487,19 +518,27 @@ const HillClimbGame = () => {
     if (!canvas || !container) return;
 
     const resizeCanvas = () => {
-      canvas.width = container.clientWidth;
-      canvas.height = 400; // Keep height fixed at 400px, or adjust as needed
-      // No explicit re-render call here, game loop will pick up changes
+      // Set the drawing buffer size to match the element's display size
+      if (container) {
+        canvas.width = Math.ceil(container.clientWidth);
+        canvas.height = Math.ceil(container.clientHeight);
+      }
+      // No explicit re-render call here; game loop will pick up new dimensions
     };
 
-    resizeCanvas(); // Initial resize
+    // Initial resize
+    resizeCanvas();
 
     const resizeObserver = new ResizeObserver(resizeCanvas);
-    resizeObserver.observe(container);
+    resizeObserver.observe(container); // Observe the container for resize
+
+    // Also listen to window resize events for a more robust full-screen experience
+    window.addEventListener('resize', resizeCanvas);
 
     return () => {
       resizeObserver.unobserve(container);
       resizeObserver.disconnect();
+      window.removeEventListener('resize', resizeCanvas);
     };
   }, []); // Empty dependency array, runs once to setup observer
 
@@ -516,7 +555,7 @@ const HillClimbGame = () => {
         angle: 0,
         angularVel: 0,
         onGround: false,
-        fuel: 100
+        fuel: 100,
       },
       camera: { x: 0, y: 0 },
       terrain: newTerrain,
@@ -525,44 +564,55 @@ const HillClimbGame = () => {
       keys: {},
       gameRunning: true,
       distance: 0,
-      coins: 0
+      coins: 0,
     };
     setGameOver(false);
     setGameStats({ distance: 0, fuel: 100, coins: 0 });
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
-      <div className="bg-white rounded-lg shadow-lg p-6 max-w-7xl w-full">
-        <h1 className="text-3xl font-bold text-center mb-4 text-gray-800">Juu Climb Racing</h1>
-        
+    <div className="flex flex-col items-center justify-center h-screen w-screen bg-gray-100 overflow-hidden">
+      <div className="bg-white rounded-lg shadow-lg p-2 w-full h-full flex flex-col">
+        <h1 className="text-3xl font-bold text-center mb-2 text-gray-800">
+          Juu Climb Racing
+        </h1>
+
         {/* Game Stats */}
-        <div className="flex justify-c items-center mb-4 p-3 bg-gray-50 rounded">
-          <div className="flex gap-6">
-            <span className="font-semibold">Distance: {gameStats.distance}m</span>
-            <span className="font-semibold">Fuel: {gameStats.fuel}%</span>
-            <span className="font-semibold">Coins: {gameStats.coins}</span>
+        <div className="flex justify-c items-center mb-2 p-2 bg-gray-50 rounded">
+          <div className="flex w-full justify-around items-center">
+            <div className="flex gap-4">
+              <span className="font-semibold text-sm md:text-base">
+                Distance: {gameStats.distance}m
+              </span>
+              <span className="font-semibold text-md md:text-base">Fuel: {gameStats.fuel}%</span>
+              <span className="font-semibold text-md md:text-base">Coins: {gameStats.coins}</span>
+            </div>
+            <div>
+              <button
+                onClick={restartGame}
+                className="px-3 py-1 md:px-4 md:py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors text-sm md:text-base"
+              >
+                Restart
+              </button>
+            </div>
           </div>
-          <button 
-            onClick={restartGame}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-          >
-            Restart
-          </button>
         </div>
 
         {/* Game Canvas */}
-        <div ref={canvasContainerRef} className="relative border-2 w-full border-gray-300 rounded">
-          <canvas  
-            ref={canvasRef}
-          />
-          
+        <div
+          ref={canvasContainerRef}
+          className="relative w-full h-full rounded flex-grow" // Removed border classes
+        >
+          <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full block" />
+
           {gameOver && (
             <div className="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center">
               <div className="bg-white p-8 rounded-lg text-center">
-                <h2 className="text-2xl font-bold mb-4 text-red-600">Game Over!</h2>
+                <h2 className="text-2xl font-bold mb-4 text-red-600">
+                  Game Over!
+                </h2>
                 <p className="mb-4">Distance: {gameStats.distance}m</p>
-                <button 
+                <button
                   onClick={restartGame}
                   className="px-6 py-3 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
                 >
